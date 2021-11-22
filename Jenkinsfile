@@ -48,64 +48,6 @@ pipeline {
 			}
 		}
 
-		stage("Test other configurations") {
-			when {
-				allOf {
-					branch 'main'
-					not { triggeredBy 'UpstreamCause' }
-				}
-			}
-			parallel {
-				stage("test: baseline (next)") {
-					agent {
-						label 'data'
-					}
-					options { timeout(time: 30, unit: 'MINUTES') }
-
-					environment {
-						DOCKER_HUB = credentials('hub.docker.com-springbuildmaster')
-						ARTIFACTORY = credentials('02bd1690-b54f-4c9f-819d-a77cb7a9822c')
-					}
-
-					steps {
-						script {
-							docker.withRegistry('', 'hub.docker.com-springbuildmaster') {
-								docker.image(p['docker.java.next.image']).inside(p['docker.java.inside.docker']) {
-									sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
-									sh 'PROFILE=java11 ci/verify.sh'
-									sh "ci/clean.sh"
-								}
-							}
-						}
-					}
-				}
-
-				stage("test: baseline (LTS)") {
-					agent {
-						label 'data'
-					}
-					options { timeout(time: 30, unit: 'MINUTES') }
-
-					environment {
-						DOCKER_HUB = credentials('hub.docker.com-springbuildmaster')
-						ARTIFACTORY = credentials('02bd1690-b54f-4c9f-819d-a77cb7a9822c')
-					}
-
-					steps {
-						script {
-							docker.withRegistry('', 'hub.docker.com-springbuildmaster') {
-								docker.image(p['docker.java.lts.image']).inside(p['docker.java.inside.docker']) {
-									sh "docker login --username ${DOCKER_HUB_USR} --password ${DOCKER_HUB_PSW}"
-									sh 'PROFILE=java11 ci/verify.sh'
-									sh "ci/clean.sh"
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-
 		stage('Release to artifactory') {
 			when {
 				anyOf {
